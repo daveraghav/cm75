@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { fetchCoda } from "@/lib/coda";
 
+export const dynamic = 'force-dynamic';
+
 const CODA_DOC_ID = process.env.CODA_DOC_ID;
 const TABLE_ID = "grid-sync-1054-Table-dynamic-7d732c10a0257d78bcc179ab2941dbee0613320f6422067d6b26b6e62d2d2826";
 
