@@ -8,22 +8,32 @@ const TABLE_ID = "grid-sync-1054-Table-dynamic-7d732c10a0257d78bcc179ab2941dbee0
 
 export async function GET() {
   try {
-    const data = await fetchCoda(`/docs/${CODA_DOC_ID}/tables/${TABLE_ID}/rows?useColumnNames=false`);
+    const data = await fetchCoda(`/docs/${CODA_DOC_ID}/tables/${TABLE_ID}/rows?useColumnNames=false&valueFormat=rich`);
     
+    // Helper to clean Coda's rich text (removes all triple backticks)
+    const cleanRichText = (val: any): string => {
+      if (Array.isArray(val)) {
+        return val.map(v => cleanRichText(v)).join(", ");
+      }
+      if (typeof val !== 'string') return val?.toString() || "";
+      return val.replace(/```/g, '').trim();
+    };
+
     // Filter and map yatras for the event timeline
     const events = data.items
       .filter((row: any) => {
-        const status = (row.values["c-GGlBmT6_60"] || "").toString();
+        const status = cleanRichText(row.values["c-GGlBmT6_60"] || "").toString();
         const isTestBooking = row.values["c-00ofsnuDNv"] === true;
-        const name = (row.values["c-Nxi1p8B_Co"] || "").toString();
+        const name = cleanRichText(row.values["c-Nxi1p8B_Co"] || "").toString();
+        const displayOnWebsite = row.values["c-WUNoH1bQH-"] === true;
         
         const isLiveOrConfirmed = status.includes("Confirmed") || status.includes("Live");
-        return isLiveOrConfirmed && !isTestBooking && name.trim() !== "";
+        return isLiveOrConfirmed && !isTestBooking && displayOnWebsite && name.trim() !== "";
       })
       .map((row: any) => {
         const cells = row.values;
-        const startVal = cells["c-VPvKp33AS8"];
-        const endVal = cells["c-5H6RVLh1bm"];
+        const startVal = cleanRichText(cells["c-VPvKp33AS8"]);
+        const endVal = cleanRichText(cells["c-5H6RVLh1bm"]);
         
         let dateDisplay = "";
         let timeDisplay = "";
@@ -54,15 +64,21 @@ export async function GET() {
           }
         }
 
+        const flyerCell = cells["c-n4MUP5xEZ6"]; // Yatra cover
+        const flyerUrl = Array.isArray(flyerCell) && flyerCell.length > 0 
+          ? flyerCell[0].url 
+          : (typeof flyerCell === 'object' && flyerCell !== null ? flyerCell.url : null);
+
         return {
           id: row.id,
-          name: cells["c-Nxi1p8B_Co"] || "Unnamed Event",
+          name: cleanRichText(cells["c-nt9EyNdKMS"] || cells["c-Nxi1p8B_Co"]) || "Unnamed Event",
           dateDisplay,
           timeDisplay,
-          location: cells["c-nt9EyNdKMS"] || "TBC",
+          location: cleanRichText(cells["c-kYqV9PswOT"]) || "TBC",
           isMultiDay,
-          type: (cells["c-iHUc3hmoAt"] || "workshop").toString().toLowerCase().replace(/,/g, ", "),
+          type: cleanRichText(cells["c-BjwTfSWxn9"] || "").toString(), // Use Topic column
           rawDate: startVal,
+          flyerUrl: flyerUrl,
         };
       })
       .sort((a: any, b: any) => {

@@ -8,26 +8,35 @@ const TABLE_ID = "grid-sync-1054-Table-dynamic-7d732c10a0257d78bcc179ab2941dbee0
 
 export async function GET() {
   try {
-    const data = await fetchCoda(`/docs/${CODA_DOC_ID}/tables/${TABLE_ID}/rows?useColumnNames=false`);
+    const data = await fetchCoda(`/docs/${CODA_DOC_ID}/tables/${TABLE_ID}/rows?useColumnNames=false&valueFormat=rich`);
     
+    // Helper to clean Coda's rich text (removes all triple backticks)
+    const cleanRichText = (val: any): string => {
+      if (Array.isArray(val)) {
+        return val.map(v => cleanRichText(v)).join(", ");
+      }
+      if (typeof val !== 'string') return val?.toString() || "";
+      return val.replace(/```/g, '').trim();
+    };
+
     // Filter and map yatras
-    console.log("Coda Data Received:", JSON.stringify(data.items[0], null, 2));
-    
     const yatras = data.items
       .filter((row: any) => {
-        const status = (row.values["c-GGlBmT6_60"] || "").toString();
+        const status = cleanRichText(row.values["c-GGlBmT6_60"] || "").toString();
         const isTestBooking = row.values["c-00ofsnuDNv"] === true;
-        const name = (row.values["c-Nxi1p8B_Co"] || "").toString();
+        const name = cleanRichText(row.values["c-Nxi1p8B_Co"] || "").toString();
+        const displayOnWebsite = row.values["c-WUNoH1bQH-"] === true;
         
         // Filter by status (Confirmed or Live) AND exclude rows where "Test booking" is checked
+        // AND ensure "Display on website" is true
         const isLiveOrConfirmed = status.includes("Confirmed") || status.includes("Live");
         
-        return isLiveOrConfirmed && !isTestBooking && name.trim() !== "";
+        return isLiveOrConfirmed && !isTestBooking && displayOnWebsite && name.trim() !== "";
       })
       .map((row: any) => ({
         id: row.id,
-        name: row.values["c-Nxi1p8B_Co"],
-        date: row.values["c-VPvKp33AS8"] || "",
+        name: cleanRichText(row.values["c-nt9EyNdKMS"] || row.values["c-Nxi1p8B_Co"]),
+        date: cleanRichText(row.values["c-VPvKp33AS8"]) || "",
       }))
       .sort((a: any, b: any) => {
         if (!a.date) return 1;

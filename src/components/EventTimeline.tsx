@@ -13,23 +13,15 @@ interface Event {
   location: string;
   type: string;
   isMultiDay: boolean;
+  flyerUrl?: string;
 }
 
-const typeStyles: Record<string, string> = {
-  workshop: "from-[#2b7fff] to-[#615fff]",
-  satsang: "from-[#f6339a] to-[#ff2056]",
-  retreat: "from-[#ad46ff] to-[#8e51ff]",
-  service: "from-[#ff6900] to-[#fb2c36]",
-};
+const capsuleStyle = "from-[#2b7fff] to-[#615fff]";
 
 export default function EventTimeline() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const getCategoryStyle = (typeStr: string) => {
-    const firstType = typeStr.split(",")[0].trim().toLowerCase();
-    return typeStyles[firstType] || typeStyles.workshop;
-  };
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -49,22 +41,33 @@ export default function EventTimeline() {
   if (loading) return <div className="bg-[#ffffff] text-center p-10 h-full">Loading events...</div>;
 
   return (
-    <div className="flex flex-col gap-[32px] w-full max-w-[512px]">
-      <div className="flex flex-col gap-[20px] md:gap-[32px] h-auto overflow-visible">
+    <div className="flex flex-col gap-[24px] md:gap-[32px] w-full max-w-[512px]">
+      <div className="flex flex-col gap-[16px] md:gap-[32px] h-auto overflow-visible">
         {events.map((event) => (
-          <div key={event.id} className="bg-[rgba(255,244,235,0.41)] border-[#fff9e8] border-[1.6px] border-solid rounded-[16px] p-5 md:p-[24px] relative w-full shrink-0">
-            <div className="mb-[16px]">
-              <p className="font-lexend font-normal text-[#4a5565] text-[14px] mb-[8px]">
+          <div 
+            key={event.id} 
+            onClick={() => setSelectedEvent(event)}
+            className="bg-[rgba(255,244,235,0.41)] border-[#fff9e8] border-[1.6px] border-solid rounded-[16px] p-4 md:p-[24px] relative w-full shrink-0 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:border-[#e89117] hover:shadow-lg group"
+          >
+            <div className="mb-[12px] md:mb-[16px]">
+              <p className="font-lexend font-normal text-[#4a5565] text-[14px] mb-[6px] md:mb-[8px]">
                 {event.dateDisplay}
               </p>
               <div className="flex justify-between items-start">
-                <h3 className="font-philosopher font-bold text-[#e89117] text-[24px] leading-tight">
+                <h3 className="font-philosopher font-bold text-[#e89117] text-[20px] md:text-[24px] leading-tight group-hover:text-[#ba324f] transition-colors">
                   {event.name}
                 </h3>
-                <div className={`bg-gradient-to-r ${getCategoryStyle(event.type)} min-h-[24px] px-[12px] py-[4px] rounded-full flex items-center justify-center shrink-0 ml-4`}>
-                  <p className="capitalize font-sans font-medium text-[11px] text-white whitespace-nowrap">
-                    {event.type}
-                  </p>
+                <div className="flex flex-wrap gap-2 justify-end ml-4">
+                  {(event.type || "").split(",").filter(t => t.trim() !== "").map((topic, idx) => (
+                    <div 
+                      key={idx}
+                      className={`bg-gradient-to-r ${capsuleStyle} min-h-[24px] px-[12px] py-[4px] rounded-full flex items-center justify-center shrink-0`}
+                    >
+                      <p className="capitalize font-sans font-medium text-[11px] text-white whitespace-nowrap">
+                        {topic.trim()}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -95,6 +98,79 @@ export default function EventTimeline() {
         </p>
         <img src={imgIconArrow} alt="" className="size-[20px] group-hover:invert transition-all" />
       </button>
+
+      {/* Event Modal */}
+      {selectedEvent && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity"
+          onClick={() => setSelectedEvent(null)}
+        >
+          <div 
+            className="bg-white rounded-[24px] max-w-2xl w-full max-h-[90vh] overflow-hidden relative shadow-2xl animate-in fade-in zoom-in duration-300 flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white shrink-0">
+              <h3 className="font-philosopher font-bold text-[18px] md:text-[20px] text-[#2C413B] truncate mr-4">
+                {selectedEvent.name}
+              </h3>
+              <div className="flex items-center gap-3 shrink-0">
+                {selectedEvent.flyerUrl && (
+                  <a 
+                    href={selectedEvent.flyerUrl} 
+                    download
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-gray-50 hover:bg-gray-100 p-2 rounded-full transition-all hover:scale-110"
+                    title="Download Flyer"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                  </a>
+                )}
+                <button 
+                  onClick={() => setSelectedEvent(null)}
+                  className="bg-gray-50 hover:bg-gray-100 p-2 rounded-full transition-all hover:scale-110"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-y-auto flex-grow">
+              {selectedEvent.flyerUrl ? (
+                <img 
+                  src={selectedEvent.flyerUrl} 
+                  alt={selectedEvent.name} 
+                  className="w-full h-auto object-contain block"
+                />
+              ) : (
+                <div className="p-12 text-center flex flex-col items-center justify-center min-h-[300px] bg-gradient-to-br from-[#fff4eb] to-white">
+                  <div className="bg-[#ba324f]/10 p-4 rounded-full mb-6">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ba324f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                      <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                  </div>
+                  <h3 className="font-philosopher font-bold text-[28px] text-[#2C413B] mb-4">
+                    {selectedEvent.name}
+                  </h3>
+                  <p className="font-lexend text-[#64748B] text-[18px] max-w-md">
+                    Further information for this event is coming soon. Please check back later!
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
