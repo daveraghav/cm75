@@ -21,7 +21,7 @@ const capsuleStyle = "from-[#2b7fff] to-[#615fff]";
 export default function EventTimeline() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(5);
 
   useEffect(() => {
@@ -44,14 +44,18 @@ export default function EventTimeline() {
   const displayedEvents = events.slice(0, visibleCount);
   const hasMore = visibleCount < events.length;
 
+  const toggleExpand = (id: string) => {
+    setExpandedEventId(expandedEventId === id ? null : id);
+  };
+
   return (
     <div className="flex flex-col gap-[24px] md:gap-[32px] w-full max-w-[480px] h-auto bg-white relative px-2">
       <div className="flex flex-col gap-[16px] md:gap-[24px]">
         {displayedEvents.map((event) => (
           <div 
             key={event.id} 
-            onClick={() => setSelectedEvent(event)}
-            className="bg-[rgba(255,244,235,0.41)] border-[#fff9e8] border-[1.6px] border-solid rounded-[16px] p-4 md:p-[20px] relative w-full shrink-0 cursor-pointer transition-all duration-300 hover:scale-[1.01] hover:border-[#e89117] hover:shadow-md group"
+            onClick={() => toggleExpand(event.id)}
+            className={`bg-[rgba(255,244,235,0.41)] border-[#fff9e8] border-[1.6px] border-solid rounded-[20px] p-4 md:p-[20px] relative w-full shrink-0 cursor-pointer transition-all duration-300 hover:border-[#e89117] hover:shadow-md group overflow-hidden ${expandedEventId === event.id ? 'border-[#e89117] shadow-lg' : ''}`}
           >
             <div className="mb-[12px] md:mb-[16px]">
               <p className="font-lexend font-normal text-[#4a5565] text-[13px] mb-[6px]">
@@ -93,6 +97,52 @@ export default function EventTimeline() {
                 </p>
               </div>
             </div>
+
+            {/* In-Card Content (Flyer or Placeholder) */}
+            <div className={`mt-6 transition-all duration-500 ease-in-out overflow-hidden ${expandedEventId === event.id ? 'max-h-[1000px] opacity-100 border-t border-orange-100 pt-6' : 'max-h-0 opacity-0 pt-0'}`}>
+              {event.flyerUrl ? (
+                <div className="relative group/img">
+                  <img 
+                    src={event.flyerUrl} 
+                    alt={event.name} 
+                    className="w-full h-auto rounded-[12px] shadow-sm"
+                  />
+                  <a 
+                    href={event.flyerUrl} 
+                    download
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute top-2 right-2 bg-white/90 hover:bg-white p-2 rounded-full shadow-md transition-all opacity-0 group-hover/img:opacity-100"
+                    title="Download Flyer"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ba324f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                  </a>
+                </div>
+              ) : (
+                <div className="p-6 text-center flex flex-col items-center justify-center bg-white rounded-[12px] border border-orange-50">
+                  <div className="bg-[#ba324f]/5 p-3 rounded-full mb-4">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ba324f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                      <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                  </div>
+                  <p className="font-lexend text-[#64748B] text-[14px]">
+                    Further information coming soon!
+                  </p>
+                </div>
+              )}
+              
+              <button 
+                onClick={(e) => { e.stopPropagation(); setExpandedEventId(null); }}
+                className="mt-4 w-full py-2 text-[12px] font-medium text-[#ba324f] hover:bg-red-50 rounded-lg transition-colors border border-[#ba324f]/10"
+              >
+                Close Details
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -107,79 +157,6 @@ export default function EventTimeline() {
           </p>
           <img src={imgIconArrow} alt="" className="size-[20px] group-hover:invert transition-all" />
         </button>
-      )}
-
-      {/* Event Modal - Optimized for iframes */}
-      {selectedEvent && (
-        <div 
-          className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center p-4 pt-10 backdrop-blur-sm transition-opacity overflow-y-auto"
-          onClick={() => setSelectedEvent(null)}
-        >
-          <div 
-            className="bg-white rounded-[24px] max-w-2xl w-full max-h-[90vh] md:max-h-none overflow-hidden relative shadow-2xl animate-in fade-in zoom-in duration-300 flex flex-col mb-10"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white shrink-0">
-              <h3 className="font-philosopher font-bold text-[18px] md:text-[20px] text-[#2C413B] truncate mr-4">
-                {selectedEvent.name}
-              </h3>
-              <div className="flex items-center gap-3 shrink-0">
-                {selectedEvent.flyerUrl && (
-                  <a 
-                    href={selectedEvent.flyerUrl} 
-                    download
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-gray-50 hover:bg-gray-100 p-2 rounded-full transition-all hover:scale-110"
-                    title="Download Flyer"
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="7 10 12 15 17 10"></polyline>
-                      <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                  </a>
-                )}
-                <button 
-                  onClick={() => setSelectedEvent(null)}
-                  className="bg-gray-50 hover:bg-gray-100 p-2 rounded-full transition-all hover:scale-110"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div className="overflow-y-auto flex-grow">
-              {selectedEvent.flyerUrl ? (
-                <img 
-                  src={selectedEvent.flyerUrl} 
-                  alt={selectedEvent.name} 
-                  className="w-full h-auto object-contain block"
-                />
-              ) : (
-                <div className="p-12 text-center flex flex-col items-center justify-center min-h-[300px] bg-gradient-to-br from-[#fff4eb] to-white">
-                  <div className="bg-[#ba324f]/10 p-4 rounded-full mb-6">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ba324f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                      <polyline points="21 15 16 10 5 21"></polyline>
-                    </svg>
-                  </div>
-                  <h3 className="font-philosopher font-bold text-[28px] text-[#2C413B] mb-4">
-                    {selectedEvent.name}
-                  </h3>
-                  <p className="font-lexend text-[#64748B] text-[18px] max-w-md">
-                    Further information for this event is coming soon. Please check back later!
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
