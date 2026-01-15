@@ -57,8 +57,8 @@ export default function RegistrationForm() {
   };
 
   return (
-    <div className="bg-[#ffffff] border border-[#e5e7eb] content-stretch flex flex-col gap-[16px] md:gap-[32px] h-auto min-h-[600px] items-start pb-6 md:pb-[40px] pt-6 md:pt-[40px] px-4 md:px-[40px] rounded-[24px] shadow-[0px_10px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)] shrink-0 w-full max-w-[574.5px]">
-      <div className="content-stretch flex flex-col gap-[4px] md:gap-[8px] h-auto md:h-[68px] items-start relative shrink-0 w-full">
+    <div className="bg-[#ffffff] border border-[#e5e7eb] content-stretch flex flex-col gap-[16px] md:gap-[24px] h-auto items-start pb-6 md:pb-[32px] pt-6 md:pt-[32px] px-4 md:px-[40px] rounded-[24px] shadow-[0px_10px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)] shrink-0 w-full max-w-[574.5px]">
+      <div className="content-stretch flex flex-col gap-[4px] md:gap-[8px] h-auto md:h-auto items-start relative shrink-0 w-full mb-2">
         <h2 className="font-['Philosopher',sans-serif] font-bold leading-tight md:leading-[36px] text-[#ba324f] text-[24px] md:text-[30px]">
           Register Now
         </h2>
@@ -66,7 +66,7 @@ export default function RegistrationForm() {
           Join us in celebrating this momentous milestone
         </p>
       </div>
-      <form onSubmit={handleSubmit} className="content-stretch flex flex-col gap-[16px] md:gap-[24px] items-start relative shrink-0 w-full">
+      <form onSubmit={handleSubmit} className="content-stretch flex flex-col gap-[16px] md:gap-[20px] items-start relative shrink-0 w-full">
         {/* Event Selection */}
         <div className="content-stretch flex flex-col gap-[8px] items-start relative shrink-0 w-full">
           <label className="font-['Inter',sans-serif] font-bold leading-[14px] text-[#0a0a0a] text-[14px] tracking-[-0.1504px]">

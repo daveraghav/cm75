@@ -20,6 +20,9 @@ export async function GET() {
     };
 
     // Filter and map yatras
+    const now = new Date();
+    now.setHours(0, 0, 0, 0); // Start of today
+
     const yatras = data.items
       .filter((row: any) => {
         const status = cleanRichText(row.values["c-GGlBmT6_60"] || "").toString();
@@ -27,11 +30,15 @@ export async function GET() {
         const name = cleanRichText(row.values["c-Nxi1p8B_Co"] || "").toString();
         const displayOnWebsite = row.values["c-WUNoH1bQH-"] === true;
         
+        // Date check: Only show events from today onwards
+        const startDateVal = cleanRichText(row.values["c-VPvKp33AS8"]);
+        const isFuture = startDateVal ? new Date(startDateVal) >= now : true;
+        
         // Filter by status (Confirmed or Live) AND exclude rows where "Test booking" is checked
         // AND ensure "Display on website" is true
         const isLiveOrConfirmed = status.includes("Confirmed") || status.includes("Live");
         
-        return isLiveOrConfirmed && !isTestBooking && displayOnWebsite && name.trim() !== "";
+        return isLiveOrConfirmed && !isTestBooking && displayOnWebsite && isFuture && name.trim() !== "";
       })
       .map((row: any) => ({
         id: row.id,

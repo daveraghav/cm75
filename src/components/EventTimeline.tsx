@@ -22,6 +22,7 @@ export default function EventTimeline() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [visibleCount, setVisibleCount] = useState(5);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -40,30 +41,33 @@ export default function EventTimeline() {
 
   if (loading) return <div className="bg-[#ffffff] text-center p-10 h-full">Loading events...</div>;
 
+  const displayedEvents = events.slice(0, visibleCount);
+  const hasMore = visibleCount < events.length;
+
   return (
-    <div className="flex flex-col gap-[24px] md:gap-[32px] w-full max-w-[512px]">
-      <div className="flex flex-col gap-[16px] md:gap-[32px] h-auto overflow-visible">
-        {events.map((event) => (
+    <div className="flex flex-col gap-[24px] md:gap-[32px] w-full max-w-[480px] h-auto bg-white relative px-2">
+      <div className="flex flex-col gap-[16px] md:gap-[24px]">
+        {displayedEvents.map((event) => (
           <div 
             key={event.id} 
             onClick={() => setSelectedEvent(event)}
-            className="bg-[rgba(255,244,235,0.41)] border-[#fff9e8] border-[1.6px] border-solid rounded-[16px] p-4 md:p-[24px] relative w-full shrink-0 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:border-[#e89117] hover:shadow-lg group"
+            className="bg-[rgba(255,244,235,0.41)] border-[#fff9e8] border-[1.6px] border-solid rounded-[16px] p-4 md:p-[20px] relative w-full shrink-0 cursor-pointer transition-all duration-300 hover:scale-[1.01] hover:border-[#e89117] hover:shadow-md group"
           >
             <div className="mb-[12px] md:mb-[16px]">
-              <p className="font-lexend font-normal text-[#4a5565] text-[14px] mb-[6px] md:mb-[8px]">
+              <p className="font-lexend font-normal text-[#4a5565] text-[13px] mb-[6px]">
                 {event.dateDisplay}
               </p>
               <div className="flex justify-between items-start">
-                <h3 className="font-philosopher font-bold text-[#e89117] text-[20px] md:text-[24px] leading-tight group-hover:text-[#ba324f] transition-colors">
+                <h3 className="font-philosopher font-bold text-[#e89117] text-[18px] md:text-[22px] leading-tight group-hover:text-[#ba324f] transition-colors">
                   {event.name}
                 </h3>
-                <div className="flex flex-wrap gap-2 justify-end ml-4">
+                <div className="flex flex-wrap gap-1.5 justify-end ml-3">
                   {(event.type || "").split(",").filter(t => t.trim() !== "").map((topic, idx) => (
                     <div 
                       key={idx}
-                      className={`bg-gradient-to-r ${capsuleStyle} min-h-[24px] px-[12px] py-[4px] rounded-full flex items-center justify-center shrink-0`}
+                      className={`bg-gradient-to-r ${capsuleStyle} min-h-[22px] px-[10px] py-[3px] rounded-full flex items-center justify-center shrink-0`}
                     >
-                      <p className="capitalize font-sans font-medium text-[11px] text-white whitespace-nowrap">
+                      <p className="capitalize font-sans font-medium text-[10px] text-white whitespace-nowrap">
                         {topic.trim()}
                       </p>
                     </div>
@@ -72,19 +76,19 @@ export default function EventTimeline() {
               </div>
             </div>
             
-            <div className="flex flex-col gap-[10px]">
-              <div className="flex gap-[10px] items-center">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4a5565" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
+            <div className="flex flex-col gap-[8px]">
+              <div className="flex gap-[8px] items-center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4a5565" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
                   <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                 </svg>
-                <p className="font-lexend font-normal text-[#4a5565] text-[14px]">
+                <p className="font-lexend font-normal text-[#4a5565] text-[13px]">
                   {event.timeDisplay}
                 </p>
               </div>
 
-              <div className="flex gap-[10px] items-center">
-                <img src={imgIconLocation} alt="Location" className="size-[18px] opacity-70" />
-                <p className="font-lexend font-normal text-[#4a5565] text-[14px] leading-relaxed">
+              <div className="flex gap-[8px] items-center">
+                <img src={imgIconLocation} alt="Location" className="size-[16px] opacity-70" />
+                <p className="font-lexend font-normal text-[#4a5565] text-[13px] leading-snug">
                   {event.location}
                 </p>
               </div>
@@ -92,21 +96,27 @@ export default function EventTimeline() {
           </div>
         ))}
       </div>
-      <button className="bg-white border border-[#ba324f] border-solid flex gap-[8px] items-center justify-center py-[17px] rounded-[16px] w-full group transition-all hover:bg-[#ba324f]">
-        <p className="font-['Philosopher',sans-serif] font-bold text-[#ba324f] text-[16px] group-hover:text-white transition-colors">
-          View more events
-        </p>
-        <img src={imgIconArrow} alt="" className="size-[20px] group-hover:invert transition-all" />
-      </button>
+      
+      {hasMore && (
+        <button 
+          onClick={() => setVisibleCount(prev => prev + 5)}
+          className="bg-white border border-[#ba324f] border-solid flex gap-[8px] items-center justify-center py-[14px] rounded-[16px] w-full group transition-all hover:bg-[#ba324f] shrink-0 mt-auto"
+        >
+          <p className="font-['Philosopher',sans-serif] font-bold text-[#ba324f] text-[16px] group-hover:text-white transition-colors">
+            View more events
+          </p>
+          <img src={imgIconArrow} alt="" className="size-[20px] group-hover:invert transition-all" />
+        </button>
+      )}
 
-      {/* Event Modal */}
+      {/* Event Modal - Optimized for iframes */}
       {selectedEvent && (
         <div 
-          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center p-4 pt-10 backdrop-blur-sm transition-opacity overflow-y-auto"
           onClick={() => setSelectedEvent(null)}
         >
           <div 
-            className="bg-white rounded-[24px] max-w-2xl w-full max-h-[90vh] overflow-hidden relative shadow-2xl animate-in fade-in zoom-in duration-300 flex flex-col"
+            className="bg-white rounded-[24px] max-w-2xl w-full max-h-[90vh] md:max-h-none overflow-hidden relative shadow-2xl animate-in fade-in zoom-in duration-300 flex flex-col mb-10"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
