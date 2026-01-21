@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from "react";
 
-const imgIcon = "https://www.figma.com/api/mcp/asset/26d95501-0702-4291-810c-c7b308235e35";
-
 export default function SubscribeForm() {
   const [locations, setLocations] = useState<string[]>([]);
   const [interests, setInterests] = useState<string[]>([]);
@@ -62,7 +60,7 @@ export default function SubscribeForm() {
   };
 
   return (
-    <div className="bg-[#ffffff] border border-[#e5e7eb] content-stretch flex flex-col gap-[16px] md:gap-[32px] h-auto min-h-[500px] items-start pb-6 md:pb-[40px] pt-6 md:pt-[40px] px-4 md:px-[40px] rounded-[24px] shadow-[0px_10px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)] shrink-0 w-full max-w-[574.5px]">
+    <div className="bg-[#ffffff] border border-[#e5e7eb] content-stretch flex flex-col gap-[16px] md:gap-[32px] h-auto min-h-[500px] items-start pb-4 md:pb-[40px] pt-4 md:pt-[40px] px-3 md:px-[40px] rounded-[20px] md:rounded-[24px] shadow-[0px_10px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)] shrink-0 w-full max-w-[574.5px]">
       <div className="content-stretch flex flex-col gap-[4px] md:gap-[8px] h-auto md:h-[68px] items-start relative shrink-0 w-full">
         <h2 className="font-['Philosopher',sans-serif] font-bold leading-tight md:leading-[36px] text-[#ba324f] text-[24px] md:text-[30px]">
           Subscribe
@@ -187,7 +185,9 @@ export default function SubscribeForm() {
               ))}
             </select>
             <div className="absolute right-[13px] top-1/2 -translate-y-1/2 pointer-events-none">
-              <img src={imgIcon} alt="" className="size-[16px]" />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
             </div>
           </div>
         </div>

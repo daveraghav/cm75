@@ -2,7 +2,6 @@
 
 const imgGurudev = "/gurudev.png";
 const imgSwaroopananda = "/swamiji.png";
-const imgLeaf = "https://www.figma.com/api/mcp/asset/1cc77d07-d58d-45ea-939f-66cd0f9cc1b5";
 
 export default function MissionJourney() {
   return (
@@ -29,7 +28,9 @@ export default function MissionJourney() {
           </div>
           <div className="relative order-1 lg:order-2">
             <div className="absolute -top-10 -right-10 w-24 h-24 hidden lg:block">
-              <img src={imgLeaf} alt="" className="w-full h-full object-contain opacity-20" />
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full object-contain opacity-20 text-[#ba324f]">
+                <path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8.13,20C11,20 13.85,18.84 15.91,16.78C18.97,13.72 20.13,9.54 18.94,5.46L19.5,4L18.1,3.46C14,2.27 9.83,3.43 6.77,6.49C4.71,8.55 3.55,11.39 3.55,14.26C3.55,14.75 3.68,15.24 3.85,15.73L1.5,16.4L2.2,18.28C7.38,16.2 13.55,14.1 15.5,5.21C15.5,5.21 15.5,5.21 15.5,5.21C8.79,6.46 3,11.75 3,18C3,18.83 3.1,19.64 3.29,20.42C2.1,18.57 2,16.14 3.03,13.5C3.58,12.1 4.5,10.87 5.66,9.87C7.5,10.61 8.94,11.95 9.77,13.58C11,16 11,18.5 10.5,20.5C12.5,20 14.5,18.5 16,16.5C17.5,14.5 18,12 17,8Z" />
+              </svg>
             </div>
             <div className="w-full max-w-[300px] md:max-w-[400px]">
               <img
@@ -45,7 +46,9 @@ export default function MissionJourney() {
         <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
           <div className="relative order-1">
             <div className="absolute -bottom-10 -left-10 w-24 h-24 hidden lg:block rotate-180">
-              <img src={imgLeaf} alt="" className="w-full h-full object-contain opacity-20" />
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full object-contain opacity-20 text-[#ba324f]">
+                <path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8.13,20C11,20 13.85,18.84 15.91,16.78C18.97,13.72 20.13,9.54 18.94,5.46L19.5,4L18.1,3.46C14,2.27 9.83,3.43 6.77,6.49C4.71,8.55 3.55,11.39 3.55,14.26C3.55,14.75 3.68,15.24 3.85,15.73L1.5,16.4L2.2,18.28C7.38,16.2 13.55,14.1 15.5,5.21C15.5,5.21 15.5,5.21 15.5,5.21C8.79,6.46 3,11.75 3,18C3,18.83 3.1,19.64 3.29,20.42C2.1,18.57 2,16.14 3.03,13.5C3.58,12.1 4.5,10.87 5.66,9.87C7.5,10.61 8.94,11.95 9.77,13.58C11,16 11,18.5 10.5,20.5C12.5,20 14.5,18.5 16,16.5C17.5,14.5 18,12 17,8Z" />
+              </svg>
             </div>
             <div className="w-full max-w-[300px] md:max-w-[400px]">
               <img

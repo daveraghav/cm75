@@ -2,9 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-const imgIconLocation = "https://www.figma.com/api/mcp/asset/595ea86d-acd3-4b57-b972-47220757eb94";
-const imgIconArrow = "https://www.figma.com/api/mcp/asset/47ce14bf-d701-48ad-8292-9552b9aab311";
-
 interface Event {
   id: string;
   name: string;
@@ -55,7 +52,7 @@ export default function EventTimeline() {
           <div 
             key={event.id} 
             onClick={() => toggleExpand(event.id)}
-            className={`bg-[rgba(255,244,235,0.41)] border-[#fff9e8] border-[1.6px] border-solid rounded-[20px] p-4 md:p-[20px] relative w-full shrink-0 cursor-pointer transition-all duration-300 hover:border-[#e89117] hover:shadow-md group overflow-hidden ${expandedEventId === event.id ? 'border-[#e89117] shadow-lg' : ''}`}
+            className={`bg-[rgba(255,244,235,0.41)] border-[#fff9e8] border-[1.6px] border-solid rounded-[20px] p-3 md:p-[20px] relative w-full shrink-0 cursor-pointer transition-all duration-300 hover:border-[#e89117] hover:shadow-md group overflow-hidden ${expandedEventId === event.id ? 'border-[#e89117] shadow-lg' : ''}`}
           >
             <div className="mb-[12px] md:mb-[16px]">
               <p className="font-lexend font-normal text-[#4a5565] text-[13px] mb-[6px]">
@@ -91,7 +88,10 @@ export default function EventTimeline() {
               </div>
 
               <div className="flex gap-[8px] items-center">
-                <img src={imgIconLocation} alt="Location" className="size-[16px] opacity-70" />
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4a5565" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
+                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
                 <p className="font-lexend font-normal text-[#4a5565] text-[13px] leading-snug">
                   {event.location}
                 </p>
@@ -155,7 +155,9 @@ export default function EventTimeline() {
           <p className="font-['Philosopher',sans-serif] font-bold text-[#ba324f] text-[16px] group-hover:text-white transition-colors">
             View more events
           </p>
-          <img src={imgIconArrow} alt="" className="size-[20px] group-hover:invert transition-all" />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#ba324f] group-hover:text-white transition-colors">
+            <path d="m6 9 6 6 6-6"/>
+          </svg>
         </button>
       )}
     </div>
