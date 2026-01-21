@@ -188,7 +188,7 @@ export default function RegistrationForm() {
             className="bg-[#f3f3f5] border border-[rgba(0,0,0,0.1)] rounded-[4px] size-[16px] cursor-pointer accent-[#ba324f]"
           />
           <label htmlFor="subscribe" className="font-['Inter',sans-serif] font-medium leading-[20px] text-[#4a5565] text-[14px] tracking-[-0.1504px] cursor-pointer">
-            Subscribe for updates and newsletters
+            Subscribe for updates and newsletter including details of further events
           </label>
         </div>
 

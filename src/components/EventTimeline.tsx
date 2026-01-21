@@ -45,6 +45,13 @@ export default function EventTimeline() {
     setExpandedEventId(expandedEventId === id ? null : id);
   };
 
+  const handleShare = (e: React.MouseEvent, event: Event) => {
+    e.stopPropagation();
+    const message = `🕉️ *CM75: Event Details* 🕉️\n\n*${event.name}*\n\n📅 Date: ${event.dateDisplay}\n⏰ Time: ${event.timeDisplay}\n📍 Location: ${event.location}\n\nLearn more and register here:\n🔗 https://www.chinmayauk.org/cm75/`;
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://api.whatsapp.com/send?text=${encodedMessage}`, '_blank');
+  };
+
   return (
     <div className="flex flex-col gap-[24px] md:gap-[32px] w-full max-w-[480px] h-auto bg-white relative px-2">
       <div className="flex flex-col gap-[16px] md:gap-[24px]">
@@ -54,8 +61,21 @@ export default function EventTimeline() {
             onClick={() => toggleExpand(event.id)}
             className={`bg-[rgba(255,244,235,0.41)] border-[#fff9e8] border-[1.6px] border-solid rounded-[20px] p-3 md:p-[20px] relative w-full shrink-0 cursor-pointer transition-all duration-300 hover:border-[#e89117] hover:shadow-md group overflow-hidden ${expandedEventId === event.id ? 'border-[#e89117] shadow-lg' : ''}`}
           >
-            <div className="mb-[12px] md:mb-[16px]">
-              <p className="font-lexend font-normal text-[#4a5565] text-[13px] mb-[6px]">
+            <button 
+              onClick={(e) => handleShare(e, event)}
+              className="absolute top-3 right-3 p-1.5 rounded-full border border-[#e89117]/20 text-[#e89117] hover:bg-[#e89117] hover:text-white transition-all z-20"
+              title="Share on WhatsApp"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 17 20 12 15 7" />
+                <path d="M4 18v-2a4 4 0 0 1 4-4h12" />
+              </svg>
+            </button>
+            <div className="mb-[12px] md:mb-[16px] pr-8">
+              <p className="font-lexend font-normal text-[#4a5565] text-[13px] mb-[6px] flex items-center gap-[8px]">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a5565" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
                 {event.dateDisplay}
               </p>
               <div className="flex justify-between items-start">
