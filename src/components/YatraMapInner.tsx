@@ -1,11 +1,28 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { MapContainer, TileLayer, Marker, Polyline, useMap } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { 
+  Map, 
+  useMap, 
+  AdvancedMarker, 
+} from "@vis.gl/react-google-maps";
 
 interface Event {
+  id: string;
+  name: string;
+  dateDisplay: string;
+  timeDisplay: string;
+  location: string;
+  type: string;
+  isMultiDay: boolean;
+  flyerUrl?: string;
+  rawDate: string;
+  rawEndDate: string;
+  status: string;
+  coords: { lat: number; lng: number };
+}
+
+interface RawEvent {
   id: string;
   name: string;
   dateDisplay: string;
@@ -31,7 +48,7 @@ const STATUS_COLORS: Record<string, string> = {
   "Complete": "#94a3b8",
 };
 
-function getStatusKey(event: Event) {
+function getStatusKey(event: Event | RawEvent) {
   const now = new Date();
   const endDate = event.rawEndDate ? new Date(event.rawEndDate) : (event.rawDate ? new Date(event.rawDate) : null);
   
@@ -41,20 +58,45 @@ function getStatusKey(event: Event) {
   return "Upcoming";
 }
 
-// Component to handle map view adjustments
-function MapAutoCenter({ positions }: { positions: [number, number][] }) {
+// Polyline component for Google Maps
+function Polyline({ positions, show }: { positions: google.maps.LatLngLiteral[], show: boolean }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map || !show || positions.length < 2) return;
+
+    const polyline = new google.maps.Polyline({
+      path: positions,
+      geodesic: true,
+      strokeColor: "#1a1a1a",
+      strokeOpacity: 0.5,
+      strokeWeight: 2.5,
+      map: map,
+      icons: [{
+        icon: { path: "M 0,-1 0,1", strokeOpacity: 1, scale: 2 },
+        offset: "0",
+        repeat: "20px"
+      }]
+    });
+
+    return () => {
+      polyline.setMap(null);
+    };
+  }, [map, positions, show]);
+
+  return null;
+}
+
+// Auto-center component
+function MapAutoCenter({ positions }: { positions: google.maps.LatLngLiteral[] }) {
   const map = useMap();
   useEffect(() => {
-    if (positions.length > 0) {
-      const bounds = L.latLngBounds(positions);
-      map.fitBounds(bounds, { 
-        padding: [120, 120],
-        maxZoom: 7
-      });
-    } else {
-      map.setView([54.5, -2], 5);
+    if (map && positions.length > 0) {
+      const bounds = new google.maps.LatLngBounds();
+      positions.forEach(pos => bounds.extend(pos));
+      map.fitBounds(bounds, { top: 120, bottom: 120, left: 120, right: 120 });
     }
-  }, [positions, map]);
+  }, [map, positions]);
   return null;
 }
 
@@ -65,7 +107,7 @@ export default function YatraMapInner() {
   const [colorBy, setColorBy] = useState<"topic" | "status">("topic");
   const [showPath, setShowPath] = useState(false);
 
-  const handleShare = (event: Event) => {
+  const handleShare = (event: Event | RawEvent) => {
     const message = `🕉️ *CM75: Event Details* 🕉️\n\n*${event.name}*\n\n📅 Date: ${event.dateDisplay}\n⏰ Time: ${event.timeDisplay}\n📍 Location: ${event.location}\n\nLearn more and register here:\n🔗 https://www.chinmayauk.org/cm75/`;
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://api.whatsapp.com/send?text=${encodedMessage}`, '_blank');
@@ -75,8 +117,12 @@ export default function YatraMapInner() {
     const fetchEvents = async () => {
       try {
         const res = await fetch("/api/events");
-        const data = await res.json();
-        setEvents(data);
+        const data: RawEvent[] = await res.json();
+        const validEvents = data
+          .filter((e): e is Event & { coords: { lat: number, lng: number } } => 
+            !!e.coords && typeof e.coords.lat === 'number' && typeof e.coords.lng === 'number' && e.location !== "TBC"
+          ) as Event[];
+        setEvents(validEvents);
       } catch (error) {
         console.error("Failed to fetch events from API:", error);
       } finally {
@@ -86,14 +132,7 @@ export default function YatraMapInner() {
     fetchEvents();
   }, []);
 
-  const eventMarkers = useMemo(() => {
-    return events
-      .filter((event) => event.location !== "TBC" && event.coords && typeof event.coords.lat === 'number' && typeof event.coords.lng === 'number')
-      .map((event) => ({
-        ...event,
-        coords: event.coords!
-      }));
-  }, [events]);
+  const eventMarkers = useMemo(() => events, [events]);
 
   const uniqueTopics = useMemo(() => {
     const topics = new Set<string>();
@@ -108,12 +147,10 @@ export default function YatraMapInner() {
   const uniqueStatuses = ["Upcoming", "Complete"];
 
   const polylinePositions = useMemo(() => {
-    return eventMarkers.map((m) => [m.coords.lat, m.coords.lng] as [number, number]);
+    return eventMarkers.map((m) => ({ lat: m.coords.lat, lng: m.coords.lng }));
   }, [eventMarkers]);
 
-  if (loading) return <div className="bg-[#ffffff] text-center p-10 h-full">Loading events...</div>;
-
-  const getMarkerColor = (event: Event) => {
+  const getMarkerColor = (event: Event | RawEvent) => {
     if (colorBy === "topic") {
       const topic = event.type.split(",")[0].trim();
       return TOPIC_COLORS[topic] || TOPIC_COLORS["default"];
@@ -123,19 +160,12 @@ export default function YatraMapInner() {
     }
   };
 
-  const createNumberedIcon = (number: number, color: string) => {
-    return L.divIcon({
-      html: `<div class="w-8 h-8 rounded-full text-white flex items-center justify-center font-bold border-2 border-white shadow-lg text-sm transition-transform hover:scale-110" style="background-color: ${color}">${number}</div>`,
-      className: "custom-div-icon",
-      iconSize: [32, 32],
-      iconAnchor: [16, 16],
-    });
-  };
+  if (loading) return <div className="bg-[#ffffff] text-center p-10 h-full">Loading events...</div>;
 
   return (
     <div className="w-full h-full relative overflow-hidden bg-gray-50">
       {/* Controls */}
-      <div className="absolute top-4 left-14 z-[1000] flex flex-col gap-2">
+      <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2">
         <div className="bg-white/90 backdrop-blur-sm p-2 rounded-xl shadow-lg border border-gray-100 flex gap-1">
           <button 
             onClick={() => setColorBy("topic")}
@@ -192,37 +222,32 @@ export default function YatraMapInner() {
         </div>
       </div>
 
-      <MapContainer
-        center={[54.5, -2]}
-        zoom={5}
-        style={{ height: "100%", width: "100%" }}
-        scrollWheelZoom={true}
+      <Map
+        defaultCenter={{ lat: 54.5, lng: -2 }}
+        defaultZoom={5}
+        mapId="DEMO_MAP_ID"
+        disableDefaultUI={true}
+        zoomControl={true}
+        className="w-full h-full"
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        
         {eventMarkers.map((event, index) => (
-          <Marker
+          <AdvancedMarker
             key={event.id}
-            position={[event.coords.lat, event.coords.lng]}
-            icon={createNumberedIcon(index + 1, getMarkerColor(event))}
-            eventHandlers={{
-              click: () => setSelectedEvent({ ...event, index: index + 1 }),
-            }}
-          />
+            position={event.coords}
+            onClick={() => setSelectedEvent({ ...event, index: index + 1 })}
+          >
+            <div 
+              className="w-8 h-8 rounded-full text-white flex items-center justify-center font-bold border-2 border-white shadow-lg text-sm transition-transform hover:scale-110 cursor-pointer translate-y-1/2" 
+              style={{ backgroundColor: getMarkerColor(event) }}
+            >
+              {index + 1}
+            </div>
+          </AdvancedMarker>
         ))}
 
-        {showPath && polylinePositions.length > 1 && (
-          <Polyline
-            positions={polylinePositions}
-            pathOptions={{ color: "#1a1a1a", weight: 2.5, opacity: 0.5, dashArray: "10, 10" }}
-          />
-        )}
-
+        <Polyline positions={polylinePositions} show={showPath} />
         <MapAutoCenter positions={polylinePositions} />
-      </MapContainer>
+      </Map>
 
       {/* Modal Overlay */}
       {selectedEvent && (
@@ -245,6 +270,18 @@ export default function YatraMapInner() {
                 <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Yatra {selectedEvent.index}</span>
               </div>
               <div className="flex gap-1">
+                <button 
+                  onClick={() => {
+                    const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedEvent.coords.lat},${selectedEvent.coords.lng}`;
+                    window.open(url, "_blank");
+                  }}
+                  className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                  title="Get Directions"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#4a5565">
+                    <path d="M21.71 11.29l-9-9c-.39-.39-1.02-.39-1.41 0l-9 9c-.39.39-.39 1.02 0 1.41l9 9c.39.39 1.02.39 1.41 0l9-9c.39-.38.39-1.01 0-1.41zM14 14.5V12h-4v3H8v-4c0-.55.45-1 1-1h5V7.5l3.5 3.5-3.5 3.5z"/>
+                  </svg>
+                </button>
                 <button 
                   onClick={() => {
                     const prevIdx = selectedEvent.index - 2;
