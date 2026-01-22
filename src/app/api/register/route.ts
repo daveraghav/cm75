@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       "c-Fm0EQERoEQ": data.phone,    // Phone Number
       "c-wuPInc9Fy4": data.city,     // Location
       "c-QKPF4SeChY": data.areaOfInterest, // Area of Interest
-      "c-JbV0QvPZYz": data.event,    // Yatra
+      "c-JbV0QvPZYz": data.events || data.event,    // Yatra (supports array of IDs)
       "c-yW5dQ-WL1h": data.subscribe, // Subscribed checkbox
       "c-qHz6jtPLg5": data.source || "CM75 Registration", // Source
       "c-B6JxOGKeC5": new Date().toISOString(), // Registered On

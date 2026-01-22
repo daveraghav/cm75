@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function RegistrationForm() {
   const [yatras, setYatras] = useState<{ id: string; name: string; date?: string }[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
   const [formData, setFormData] = useState({
-    event: "",
+    events: [] as string[],
     fullName: "",
     email: "",
     phone: "",
@@ -14,6 +14,29 @@ export default function RegistrationForm() {
     subscribe: false,
   });
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleEvent = (eventId: string) => {
+    setFormData(prev => {
+      const currentEvents = prev.events;
+      if (currentEvents.includes(eventId)) {
+        return { ...prev, events: currentEvents.filter(id => id !== eventId) };
+      } else {
+        return { ...prev, events: [...currentEvents, eventId] };
+      }
+    });
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -40,6 +63,10 @@ export default function RegistrationForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.events.length === 0) {
+      alert("Please select at least one event.");
+      return;
+    }
     setStatus("loading");
     try {
       const res = await fetch("/api/register", {
@@ -66,34 +93,70 @@ export default function RegistrationForm() {
       </div>
       <form onSubmit={handleSubmit} className="content-stretch flex flex-col gap-[16px] md:gap-[20px] items-start relative shrink-0 w-full">
         {/* Event Selection */}
-        <div className="content-stretch flex flex-col gap-[8px] items-start relative shrink-0 w-full">
+        <div className="content-stretch flex flex-col gap-[8px] items-start relative shrink-0 w-full" ref={dropdownRef}>
           <label className="font-['Inter',sans-serif] font-bold leading-[14px] text-[#0a0a0a] text-[14px] tracking-[-0.1504px]">
             Which event would you like to register for?
           </label>
           <div className="relative w-full">
-            <select
-              required
-              value={formData.event}
-              onChange={(e) => setFormData({ ...formData, event: e.target.value })}
-              className="appearance-none bg-[#f3f3f5] border border-[#e5e7eb] h-[36px] px-[13px] rounded-[14px] w-full font-['Inter',sans-serif] font-medium text-[14px] text-[#0a0a0a] focus:outline-none focus:ring-2 focus:ring-[#ba324f]"
+            <button
+              type="button"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center justify-between bg-[#f3f3f5] border border-[#e5e7eb] min-h-[36px] py-1 px-[13px] rounded-[14px] w-full font-['Inter',sans-serif] font-medium text-[14px] text-[#0a0a0a] focus:outline-none focus:ring-2 focus:ring-[#ba324f] text-left transition-all"
             >
-              <option value="" disabled>Select an event</option>
-              {yatras.map((yatra) => {
-                const dateStr = yatra.date 
-                  ? new Date(yatra.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-                  : "";
-                return (
-                  <option key={yatra.id} value={yatra.id}>
-                    {yatra.name} {dateStr ? `(${dateStr})` : ""}
-                  </option>
-                );
-              })}
-            </select>
-            <div className="absolute right-[13px] top-1/2 -translate-y-1/2 pointer-events-none">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <div className="flex flex-wrap gap-1 items-center">
+                {formData.events.length === 0 ? (
+                  <span className="text-[#717182]">Select events</span>
+                ) : (
+                  formData.events.map(eventId => {
+                    const yatra = yatras.find(y => y.id === eventId);
+                    return (
+                      <span key={eventId} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ba324f] text-white text-[12px] animate-in fade-in zoom-in duration-200">
+                        {yatra?.name}
+                        <span 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleEvent(eventId);
+                          }}
+                          className="hover:bg-white/20 rounded-full p-0.5 cursor-pointer flex items-center justify-center transition-colors"
+                        >
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M18 6L6 18M6 6l12 12"/>
+                          </svg>
+                        </span>
+                      </span>
+                    );
+                  })
+                )}
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#717182" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`shrink-0 ml-2 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}>
                 <path d="m6 9 6 6 6-6"/>
               </svg>
-            </div>
+            </button>
+
+            {isDropdownOpen && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-[#e5e7eb] rounded-[14px] shadow-lg max-h-[200px] overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-200">
+                {yatras.map((yatra) => {
+                  const isSelected = formData.events.includes(yatra.id);
+                  const dateStr = yatra.date 
+                    ? new Date(yatra.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                    : "";
+                  return (
+                    <div
+                      key={yatra.id}
+                      onClick={() => toggleEvent(yatra.id)}
+                      className={`px-[13px] py-2 cursor-pointer hover:bg-[#f3f3f5] flex items-center justify-between font-['Inter',sans-serif] text-[14px] transition-colors ${isSelected ? 'text-[#ba324f] font-semibold bg-[#ba324f]/5' : 'text-[#0a0a0a]'}`}
+                    >
+                      <span className="flex-1">{yatra.name} {dateStr ? `(${dateStr})` : ""}</span>
+                      {isSelected && (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 ml-2 animate-in zoom-in duration-200">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
