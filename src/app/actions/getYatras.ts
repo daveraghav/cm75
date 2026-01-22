@@ -1,20 +1,15 @@
-import { NextResponse } from "next/server";
-import { fetchCoda } from "@/lib/coda";
-import { geocodeAddress } from "@/lib/geocoding";
+"use server";
 
-export const dynamic = 'force-dynamic';
+import { fetchCoda } from "@/lib/coda";
 
 const CODA_DOC_ID = process.env.CODA_DOC_ID;
 const TABLE_ID = "grid-sync-1054-Table-dynamic-7d732c10a0257d78bcc179ab2941dbee0613320f6422067d6b26b6e62d2d2826";
 
-export async function GET(request: Request) {
+export async function getYatrasDirect() {
   try {
-    const { searchParams } = new URL(request.url);
-    const showAll = searchParams.get("all") === "true";
-
+    // This function calls the Coda API directly from the server
     const data = await fetchCoda(`/docs/${CODA_DOC_ID}/tables/${TABLE_ID}/rows?useColumnNames=false&valueFormat=rich`);
     
-    // Helper to clean Coda's rich text (removes all triple backticks)
     const cleanRichText = (val: any): string => {
       if (Array.isArray(val)) {
         return val.map(v => cleanRichText(v)).join(", ");
@@ -23,32 +18,28 @@ export async function GET(request: Request) {
       return val.replace(/```/g, '').trim();
     };
 
-    // Filter and map yatras for the event timeline
     const now = new Date();
-    now.setHours(0, 0, 0, 0); // Start of today
+    now.setHours(0, 0, 0, 0);
 
-    const events = data.items
+    const yatras = data.items
       .filter((row: any) => {
         const status = cleanRichText(row.values["c-GGlBmT6_60"] || "").toString();
         const isTestBooking = row.values["c-00ofsnuDNv"] === true;
         const name = cleanRichText(row.values["c-Nxi1p8B_Co"] || "").toString();
-        const location = cleanRichText(row.values["c-kYqV9PswOT"]) || "TBC";
         
-        // Match Live, Confirmed, Followup, or Complete statuses for the database source
+        // Match Live, Confirmed, or Followup statuses as requested for the database source
         const isValidStatus = status.includes("Confirmed") || 
                              status.includes("Live") || 
                              status.includes("Followup") || 
                              status.includes("Follow-up") ||
-                             status.includes("Follow up") ||
-                             status.includes("Complete");
+                             status.includes("Follow up");
         
-        return isValidStatus && !isTestBooking && name.trim() !== "" && location !== "TBC";
+        return isValidStatus && !isTestBooking && name.trim() !== "";
       })
       .map((row: any) => {
         const cells = row.values;
         const startVal = cleanRichText(cells["c-VPvKp33AS8"]);
         const endVal = cleanRichText(cells["c-5H6RVLh1bm"]);
-        const displayOnWebsite = cells["c-WUNoH1bQH-"] === true;
         
         let dateDisplay = "";
         let timeDisplay = "";
@@ -79,7 +70,7 @@ export async function GET(request: Request) {
           }
         }
 
-        const flyerCell = cells["c-n4MUP5xEZ6"]; // Yatra cover
+        const flyerCell = cells["c-n4MUP5xEZ6"];
         const flyerUrl = Array.isArray(flyerCell) && flyerCell.length > 0 
           ? flyerCell[0].url 
           : (typeof flyerCell === 'object' && flyerCell !== null ? flyerCell.url : null);
@@ -91,12 +82,11 @@ export async function GET(request: Request) {
           timeDisplay,
           location: cleanRichText(cells["c-kYqV9PswOT"]) || "TBC",
           isMultiDay,
-          type: cleanRichText(cells["c-BjwTfSWxn9"] || "").toString(), // Use Topic column
+          type: cleanRichText(cells["c-BjwTfSWxn9"] || "").toString(),
           rawDate: startVal,
           rawEndDate: endVal,
           flyerUrl: flyerUrl,
           status: cleanRichText(cells["c-GGlBmT6_60"] || "").toString(),
-          displayOnWebsite,
         };
       })
       .sort((a: any, b: any) => {
@@ -105,35 +95,9 @@ export async function GET(request: Request) {
         return new Date(a.rawDate).getTime() - new Date(b.rawDate).getTime();
       });
 
-    // Resolve coordinates for all events
-    const eventsWithCoords = await Promise.all(events.map(async (event: any) => {
-      const coords = await geocodeAddress(event.location);
-      return { ...event, coords };
-    }));
-
-    return NextResponse.json(eventsWithCoords);
-  } catch (error: any) {
-    console.error("Coda Events Fetch Error:", error);
-    // Return mock data if table is not found or error occurs during development
-    return NextResponse.json([
-      {
-        id: "1",
-        name: "Vedanta Study Group",
-        date: "Jan 15, 2025",
-        time: "6:00 PM - 8:00 PM",
-        location: "New York Center",
-        registered: 45,
-        type: "workshop",
-      },
-      {
-        id: "2",
-        name: "Family Satsang",
-        date: "Jan 20, 2025",
-        time: "10:00 AM - 12:00 PM",
-        location: "Los Angeles Center",
-        registered: 120,
-        type: "satsang",
-      }
-    ]);
+    return yatras;
+  } catch (error) {
+    console.error("Coda Action Fetch Error:", error);
+    throw error;
   }
 }

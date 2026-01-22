@@ -11,6 +11,8 @@ interface Event {
   type: string;
   isMultiDay: boolean;
   flyerUrl?: string;
+  rawDate: string;
+  displayOnWebsite: boolean;
 }
 
 const capsuleStyle = "from-[#2b7fff] to-[#615fff]";
@@ -25,8 +27,20 @@ export default function EventTimeline() {
     const fetchEvents = async () => {
       try {
         const res = await fetch("/api/events");
-        const data = await res.json();
-        setEvents(data);
+        const data: Event[] = await res.json();
+        
+        // Filter events for the timeline: 
+        // 1. Only those marked for website display
+        // 2. Only future events (starting from today)
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        
+        const filtered = data.filter(event => {
+          const isFuture = event.rawDate ? new Date(event.rawDate) >= now : true;
+          return event.displayOnWebsite && isFuture;
+        });
+
+        setEvents(filtered);
       } catch (error) {
         console.error("Failed to fetch events:", error);
       } finally {
