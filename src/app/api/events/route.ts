@@ -6,13 +6,38 @@ export const dynamic = 'force-dynamic';
 
 const CODA_DOC_ID = process.env.CODA_DOC_ID;
 const TABLE_ID = "grid-sync-1054-Table-dynamic-7d732c10a0257d78bcc179ab2941dbee0613320f6422067d6b26b6e62d2d2826";
+const STATUS_COLUMN_ID = "c-GGlBmT6_60";
+const STATUS_KEYWORDS = ["confirmed", "live", "followup", "follow-up", "follow up", "complete", "potential", "provisional"];
+
+const getAllowedStatusOptions = (options: string[]) => {
+  const normalized = options.filter(Boolean);
+  const matched = normalized.filter(option => {
+    const lower = option.toLowerCase();
+    return STATUS_KEYWORDS.some(keyword => lower.includes(keyword));
+  });
+
+  return matched;
+};
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const showAll = searchParams.get("all") === "true";
 
-    const data = await fetchCoda(`/docs/${CODA_DOC_ID}/tables/${TABLE_ID}/rows?useColumnNames=false&valueFormat=rich`);
+    const [rowsResult, statusColumnResult] = await Promise.allSettled([
+      fetchCoda(`/docs/${CODA_DOC_ID}/tables/${TABLE_ID}/rows?useColumnNames=false&valueFormat=rich`),
+      fetchCoda(`/docs/${CODA_DOC_ID}/tables/${TABLE_ID}/columns/${STATUS_COLUMN_ID}`),
+    ]);
+
+    if (rowsResult.status !== "fulfilled") {
+      throw rowsResult.reason;
+    }
+
+    const data = rowsResult.value;
+    const statusOptions = statusColumnResult.status === "fulfilled"
+      ? (statusColumnResult.value.format?.options || []).map((opt: any) => opt.name)
+      : [];
+    const allowedStatusOptions = getAllowedStatusOptions(statusOptions);
     
     // Helper to clean Coda's rich text (removes all triple backticks)
     const cleanRichText = (val: any): string => {
@@ -34,13 +59,10 @@ export async function GET(request: Request) {
         const name = cleanRichText(row.values["c-Nxi1p8B_Co"] || "").toString();
         const location = cleanRichText(row.values["c-kYqV9PswOT"]) || "TBC";
         
-        // Match Live, Confirmed, Followup, or Complete statuses for the database source
-        const isValidStatus = status.includes("Confirmed") || 
-                             status.includes("Live") || 
-                             status.includes("Followup") || 
-                             status.includes("Follow-up") ||
-                             status.includes("Follow up") ||
-                             status.includes("Complete");
+        const lowerStatus = status.toLowerCase();
+        const isValidStatus = allowedStatusOptions.length > 0
+          ? allowedStatusOptions.some(option => lowerStatus.includes(option.toLowerCase()))
+          : STATUS_KEYWORDS.some(keyword => lowerStatus.includes(keyword));
         
         return isValidStatus && !isTestBooking && name.trim() !== "" && location !== "TBC";
       })
@@ -77,6 +99,13 @@ export async function GET(request: Request) {
             dateDisplay = startDateStr;
             timeDisplay = startTimeStr;
           }
+        } else {
+          dateDisplay = "TBC";
+          timeDisplay = "TBC";
+        }
+
+        if (!timeDisplay) {
+          timeDisplay = "TBC";
         }
 
         const flyerCell = cells["c-n4MUP5xEZ6"]; // Yatra cover

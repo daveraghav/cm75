@@ -137,9 +137,13 @@ export default function RegistrationForm() {
               <div className="absolute z-10 w-full mt-1 bg-white border border-[#e5e7eb] rounded-[14px] shadow-lg max-h-[200px] overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-200">
                 {yatras.map((yatra) => {
                   const isSelected = formData.events.includes(yatra.id);
-                  const dateStr = yatra.date 
-                    ? new Date(yatra.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-                    : "";
+                  let dateStr = "TBC";
+                  if (yatra.date) {
+                    const parsedDate = new Date(yatra.date);
+                    dateStr = Number.isNaN(parsedDate.getTime())
+                      ? "TBC"
+                      : parsedDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                  }
                   return (
                     <div
                       key={yatra.id}
