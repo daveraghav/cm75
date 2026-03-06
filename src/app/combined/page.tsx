@@ -4,6 +4,7 @@ import RegistrationForm from "@/components/RegistrationForm";
 import EventTimeline from "@/components/EventTimeline";
 import MissionJourney from "@/components/MissionJourney";
 import IframeResizer from "@/components/IframeResizer";
+import StatsSection from "@/components/StatsSection";
 
 export default function CombinedViewPage() {
   return (
@@ -23,6 +24,9 @@ export default function CombinedViewPage() {
 
         {/* Mission Journey Section */}
         <MissionJourney />
+
+        {/* Intro Stats Section */}
+        <StatsSection />
       </div>
     </IframeResizer>
   );
