@@ -34,3 +34,15 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Event Timeline Timezone Compensation
+
+To compensate for Coda event times being in GMT while UK events are in BST during daylight saving months, the API automatically adds a +1 hour display offset only for dates that fall in BST.
+
+You can disable this behavior at any time by setting:
+
+```bash
+EVENT_BST_OFFSET_ENABLED=false
+```
+
+When omitted (or set to any value other than `false`), BST compensation remains enabled.

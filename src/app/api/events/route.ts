@@ -8,6 +8,30 @@ const CODA_DOC_ID = process.env.CODA_DOC_ID;
 const TABLE_ID = "grid-sync-1054-Table-dynamic-7d732c10a0257d78bcc179ab2941dbee0613320f6422067d6b26b6e62d2d2826";
 const STATUS_COLUMN_ID = "c-GGlBmT6_60";
 const STATUS_KEYWORDS = ["confirmed", "live", "followup", "follow-up", "follow up", "complete", "potential", "provisional"];
+const ENABLE_BST_COMPENSATION = process.env.EVENT_BST_OFFSET_ENABLED !== "false";
+const BST_COMPENSATION_MS = 60 * 60 * 1000;
+
+const londonTimeZoneFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Europe/London",
+  timeZoneName: "short",
+});
+
+const isInBritishSummerTime = (date: Date): boolean => {
+  const tzName = londonTimeZoneFormatter
+    .formatToParts(date)
+    .find((part) => part.type === "timeZoneName")
+    ?.value;
+
+  return tzName === "BST" || tzName === "GMT+1";
+};
+
+const applyBstCompensation = (date: Date): Date => {
+  if (!ENABLE_BST_COMPENSATION || !isInBritishSummerTime(date)) {
+    return date;
+  }
+
+  return new Date(date.getTime() + BST_COMPENSATION_MS);
+};
 
 const getAllowedStatusOptions = (options: string[]) => {
   const normalized = options.filter(Boolean);
@@ -79,17 +103,19 @@ export async function GET(request: Request) {
         if (startVal) {
           const start = new Date(startVal);
           const end = endVal ? new Date(endVal) : null;
+          const displayStart = applyBstCompensation(start);
+          const displayEnd = end ? applyBstCompensation(end) : null;
           isMultiDay = end ? (start.toLocaleDateString() !== end.toLocaleDateString()) : false;
           
-          const startDateStr = start.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-          const startTimeStr = start.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+          const startDateStr = displayStart.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+          const startTimeStr = displayStart.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
           
-          if (end) {
-            const endDateStr = end.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-            const endTimeStr = end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+          if (displayEnd) {
+            const endDateStr = displayEnd.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            const endTimeStr = displayEnd.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
             
             if (isMultiDay) {
-              const startDayMonth = start.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+              const startDayMonth = displayStart.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
               dateDisplay = `${startDayMonth} - ${endDateStr}`;
             } else {
               dateDisplay = startDateStr;
