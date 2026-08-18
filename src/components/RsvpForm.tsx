@@ -21,6 +21,8 @@ export default function RsvpForm() {
   
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
+  const [partyError, setPartyError] = useState<string | null>(null);
+
   useEffect(() => {
     async function fetchOptions() {
       try {
@@ -43,10 +45,15 @@ export default function RsvpForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.partyCount > 2 || formData.partyCount < 1) {
+      setPartyError("Party size cannot exceed 2 people (including yourself).");
+      return;
+    }
     if (formData.events.length === 0) {
       alert("Please select at least one event.");
       return;
     }
+    setPartyError(null);
     setStatus("loading");
     try {
       const res = await fetch("/api/rsvp/submit", {
@@ -145,10 +152,26 @@ export default function RsvpForm() {
               type="number"
               required
               min="1"
+              max="2"
               value={formData.partyCount}
-              onChange={(e) => setFormData({ ...formData, partyCount: Math.max(1, parseInt(e.target.value) || 1) })}
-              className="bg-[#f3f3f5] border border-[#e5e7eb] h-[36px] px-[12px] rounded-[14px] w-full font-['Inter',sans-serif] font-normal text-[14px] text-[#0a0a0a] focus:outline-none focus:ring-2 focus:ring-[#ba324f]"
+              onChange={(e) => {
+                const val = parseInt(e.target.value) || 0;
+                setFormData({ ...formData, partyCount: val });
+                if (val > 2) {
+                  setPartyError("Maximum 2 people permitted per party.");
+                } else if (val < 1) {
+                  setPartyError("Party size must be at least 1.");
+                } else {
+                  setPartyError(null);
+                }
+              }}
+              className={`bg-[#f3f3f5] border ${partyError ? 'border-red-500 ring-1 ring-red-500' : 'border-[#e5e7eb]'} h-[36px] px-[12px] rounded-[14px] w-full font-['Inter',sans-serif] font-normal text-[14px] text-[#0a0a0a] focus:outline-none focus:ring-2 ${partyError ? 'focus:ring-red-500' : 'focus:ring-[#ba324f]'}`}
             />
+            {partyError && (
+              <p className="text-red-500 font-['Lexend',sans-serif] text-[12px] leading-tight">
+                {partyError}
+              </p>
+            )}
           </div>
         </div>
 
