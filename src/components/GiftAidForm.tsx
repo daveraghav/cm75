@@ -2,23 +2,30 @@
 
 import { useState } from "react";
 
-export default function GiftAidForm() {
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    homeAddress: "",
-    city: "",
-    postCode: "",
-    country: "United Kingdom",
-    phone: "",
-    email: "",
-    giftAidDeclaration: false,
-  });
+const INITIAL_FORM_DATA = {
+  firstName: "",
+  lastName: "",
+  homeAddress: "",
+  city: "",
+  postCode: "",
+  country: "United Kingdom",
+  phone: "",
+  email: "",
+  giftAidDeclaration: false,
+};
 
+export default function GiftAidForm() {
+  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+  const resetForm = () => {
+    setFormData(INITIAL_FORM_DATA);
+    setStatus("idle");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (status === "loading") return;
     if (!formData.giftAidDeclaration) {
       alert("Please confirm the Gift Aid declaration to continue.");
       return;
@@ -33,6 +40,7 @@ export default function GiftAidForm() {
         body: JSON.stringify(formData),
       });
       if (res.ok) {
+        setFormData(INITIAL_FORM_DATA);
         setStatus("success");
       } else {
         setStatus("error");
@@ -45,6 +53,35 @@ export default function GiftAidForm() {
 
   return (
     <div className="bg-[#ffffff] border border-[#e5e7eb] content-stretch flex flex-col gap-[16px] md:gap-[32px] h-auto items-start pb-4 md:pb-[40px] pt-4 md:pt-[40px] px-3 md:px-[40px] rounded-[20px] md:rounded-[24px] shadow-[0px_10px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)] shrink-0 w-full max-w-[720px]">
+      {status === "success" ? (
+        <>
+          <div className="content-stretch flex flex-col gap-[8px] h-auto items-start relative shrink-0 w-full">
+            <h2 className="font-['Philosopher',sans-serif] font-bold leading-tight md:leading-[36px] text-[#ba324f] text-[24px] md:text-[30px]">
+              Gift Aid Declaration
+            </h2>
+            <p className="font-['Lexend',sans-serif] font-bold leading-snug md:leading-[24px] text-[#0a0a0a] text-[16px] md:text-[18px] tracking-[-0.3125px]">
+              Your response has been recorded
+            </p>
+          </div>
+          <div className="bg-[#f3f3f5] p-4 rounded-[14px] w-full border border-[#e5e7eb]">
+            <p className="font-['Inter',sans-serif] text-[14px] leading-[22px] text-[#4a5565]">
+              Thank you. Your Gift Aid declaration has been submitted. If you need to change your details, please email{" "}
+              <a href="mailto:treasury@chinmayauk.org" className="text-[#ba324f] underline underline-offset-2 font-medium">
+                treasury@chinmayauk.org
+              </a>
+              .
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={resetForm}
+            className="bg-[#ba324f] hover:bg-[#a02b44] transition-colors h-[48px] rounded-[16px] shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-4px_rgba(0,0,0,0.1)] shrink-0 w-full text-white font-['Philosopher',sans-serif] font-bold text-[16px] tracking-[-0.1504px]"
+          >
+            Make another submission
+          </button>
+        </>
+      ) : (
+        <>
       <div className="content-stretch flex flex-col gap-[8px] md:gap-[12px] h-auto items-start relative shrink-0 w-full">
         <h2 className="font-['Philosopher',sans-serif] font-bold leading-tight md:leading-[36px] text-[#ba324f] text-[24px] md:text-[30px]">
           Gift Aid Declaration
@@ -238,19 +275,18 @@ export default function GiftAidForm() {
 
         <button
           type="submit"
-          disabled={status === "loading" || status === "success"}
+          disabled={status === "loading"}
           className="bg-[#ba324f] hover:bg-[#a02b44] transition-colors h-[48px] rounded-[16px] shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-4px_rgba(0,0,0,0.1)] shrink-0 w-full text-white font-['Philosopher',sans-serif] font-bold text-[16px] tracking-[-0.1504px] mt-4 disabled:opacity-80"
         >
-          {status === "loading" ? "Submitting..." : status === "success" ? "Declaration Submitted" : "Submit"}
+          {status === "loading" ? "Submitting..." : "Submit"}
         </button>
 
-        {status === "success" && (
-          <p className="text-green-600 font-medium text-sm w-full text-center">Gift Aid declaration submitted successfully. Thank you.</p>
-        )}
         {status === "error" && (
           <p className="text-red-600 font-medium text-sm w-full text-center">Submission failed. Please try again.</p>
         )}
       </form>
+        </>
+      )}
     </div>
   );
 }
