@@ -99,3 +99,44 @@ export async function submitRsvp(data: any) {
   });
 }
 
+const CODA_API_TOKEN_FINANCES = process.env.CODA_API_TOKEN_FINANCES;
+const CODA_DOC_ID_FINANCES = "oUqO765QAX"; // Finances Doc ID
+
+export async function fetchCodaFinances(endpoint: string, options: RequestInit = {}) {
+  const url = `https://coda.io/apis/v1${endpoint}`;
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${CODA_API_TOKEN_FINANCES}`,
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Failed to fetch from Coda Finances");
+  }
+
+  return response.json();
+}
+
+export async function submitGiftAid(data: Record<string, unknown>) {
+  const tableId = "grid-yFMnxXCYr7"; // Gift Aid Submissions
+  const body = {
+    rows: [
+      {
+        cells: Object.entries(data).map(([column, value]) => ({
+          column,
+          value,
+        })),
+      },
+    ],
+  };
+
+  return fetchCodaFinances(`/docs/${CODA_DOC_ID_FINANCES}/tables/${tableId}/rows`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
