@@ -6,7 +6,7 @@ const MAX_PARTY_SIZE = 10;
 
 export default function RsvpForm() {
   const [titles, setTitles] = useState<string[]>(["Mr", "Mrs", "Ms", "Dr", "Rev", "Hon", "Prof", "Other"]);
-  const [events, setEvents] = useState<string[]>(["Ganga Aarti", "Hanuman Havan", "Yagna"]);
+  const [events, setEvents] = useState<string[]>(["Hanuman Havan", "Yagna"]);
   
   const [formData, setFormData] = useState({
     title: "",
@@ -35,7 +35,7 @@ export default function RsvpForm() {
             setTitles(data.titles);
           }
           if (data.events && data.events.length > 0) {
-            setEvents(data.events);
+            setEvents(data.events.filter((event: string) => event !== "Ganga Aarti"));
           }
         }
       } catch (error) {

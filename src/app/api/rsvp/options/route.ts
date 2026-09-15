@@ -6,7 +6,10 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const options = await getRsvpOptions();
-    return NextResponse.json(options);
+    return NextResponse.json({
+      ...options,
+      events: (options.events || []).filter((event: string) => event !== "Ganga Aarti"),
+    });
   } catch (error: any) {
     console.error("Fetch RSVP Options Error:", error);
     return NextResponse.json({ titles: [], events: [] }, { status: 500 });
